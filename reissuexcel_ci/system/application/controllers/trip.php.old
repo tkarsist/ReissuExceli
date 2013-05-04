@@ -1,0 +1,101 @@
+<?php
+
+class Trip extends Controller {
+
+	function Trip()
+	{
+		parent::Controller();	
+	}
+	
+	function index()
+	{
+		$this->load->view('index_view');
+	}
+	
+	function start()
+	{
+		$this->load->view('create_trip_view');
+	}
+	
+	function createtrip()
+	{
+		$this->load->model('trip_model');
+		
+		$count=1;
+		while ($this->input->post('name'.$count)!=FALSE){
+			
+			$name=$this->input->post('name'.$count);	
+			
+			if($this->input->post('email'.$count)){
+				$email=$this->input->post('email'.$count);	
+			}
+			else{
+				$email="";
+			}
+			
+			$members[]=array("NAME"=>$name, "EMAIL"=>$email, "ACCOUNTNUMBER"=>"");
+			$count=$count+1;
+		}
+		
+		
+		if($this->input->post('tripname')!=FALSE){
+			$trip_id=$this->trip_model->addTrip($this->input->post('tripname'),$members);
+			$data['trip_id']=$trip_id;
+			$this->load->view('trip_created', $data);
+			
+		}
+		
+	}	
+	
+	function trip_main($trip){
+		$this->load->model('trip_model');
+		$data['trip_name']=$this->trip_model->getTripName($trip);
+		$data['members']=$this->trip_model->getTripMembers($trip);
+		$data['trip_id']=$trip;
+		$this->load->view('trip_main_view', $data);
+
+		
+		
+	}
+	
+	function test()
+	{
+		$this->load->model('trip_model');
+		$data['tripname']=$this->trip_model->getTripName('26');
+		$data['members']=$this->trip_model->getTripMembers('26');
+		$this->load->view('test_view',$data);
+	}
+	
+	function test2()
+	{
+		$this->load->model('trip_model');
+		$data['participants']=$this->trip_model->getBillParticipants('2');
+		$data['bills']=$this->trip_model->getBillsByMember('1','2');
+		$this->load->view('test2_view',$data);
+	}
+	function test3()
+	{
+		$this->load->view('test3_view');
+	}
+	
+	function test4()
+	{
+		$roska=$this->input->post('user');
+		echo $roska;
+		//voi siis tehda esim post-kasittelyn ja sitten ohjata takas nakymaan
+		//$this->test3();
+	}
+
+	function test5()
+	{
+		$this->load->model('trip_model');
+		$arr[]=array("NAME"=>"Jaska", "EMAIL"=>"jaska@jaska", "ACCOUNTNUMBER"=>"11221");
+		$arr[]=array("NAME"=>"Paska", "EMAIL"=>"paska@jaska", "ACCOUNTNUMBER"=>"11221");
+		$arr[]=array("NAME"=>"Saska", "EMAIL"=>"ssaska@jaska", "ACCOUNTNUMBER"=>"11221");
+		$arr[]=array("NAME"=>"HARRI", "EMAIL"=>"", "ACCOUNTNUMBER"=>"");
+		$this->trip_model->addTrip("TestireissuX",$arr);
+	}
+	
+}
+
+?>

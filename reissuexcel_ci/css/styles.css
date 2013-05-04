@@ -1,0 +1,150 @@
+@charset "UTF-8";
+/* CSS Document */
+p {
+}
+body {
+}
+.table {
+//border: 1px solid black;
+width:100%;
+border-collapse: collapse;
+}
+.innerTable {
+//border: 1px solid black;
+width:100%;
+height:100%;
+border-collapse: collapse;
+}
+.td{
+border: 1px solid black;
+}
+.middleCell2{
+width:80%;
+}
+.sideCell2{
+width:10%;
+}
+.middleCell{
+width:50%;
+}
+.header{
+background-color:#528e48;
+height:70px;
+-moz-border-radius:12px 12px 0px 0px;
+}
+.sideCell{
+width:25%;
+}
+.area{
+background-color:#6ea665;
+height:350px;
+-moz-border-radius:0px 0px 12px 12px;
+}
+.areaLow{
+background-color:#6ea665;
+height:100px;
+}
+.areaSideCell{
+width:5%;
+}
+.areaCenterCell{
+width:90%;
+//background-color:#ffffff;
+}
+.areaCenterCellInput{
+width:90%;
+background-color:#d0f1d0;
+-moz-border-radius:12px 12px 12px 12px;
+//background:none repeat scroll 0 0 #EEEEEE;
+//border:1px solid #000000;
+display:inline-block;
+height:100px;
+border-right: 3px solid #558057;
+border-bottom: 3px solid #558057;
+//padding:1em;
+//text-align:center;
+//width:13em;
+}
+.areaCenterCellInput2{
+width:90%;
+background-color:#d0f1d0;
+-moz-border-radius:12px 12px 12px 12px;
+//background:none repeat scroll 0 0 #EEEEEE;
+//border:1px solid #000000;
+display:inline-block;
+//height:200px;
+border-right: 3px solid #558057;
+border-bottom: 3px solid #558057;
+}
+.spaceTR{
+height:10px;
+}
+.basicInfoTR{
+height:100px;
+}
+.membersTR{
+height:200px;
+}
+.space2TR{
+height:20px;
+}
+table.prestable{
+width=100%;
+border-style=groove;
+border-width=2px;
+border-color:#98bf21;
+border: 3px groove #98bf21;
+
+}
+table.prestable {
+	border-width: 3px;
+	border-spacing: ;
+	border-style: groove;
+	border-color: #98bf21;
+	border-collapse: collapse;
+	width:100%;
+
+}
+table.prestable th {
+	border-width: 2px;
+	padding: 2px;
+	border-style: inset;
+	border-color: #98bf21;
+	-moz-border-radius: ;
+}
+table.prestable td {
+	border-width: 2px;
+	padding: 2px;
+	border-style: inset;
+	border-color: #98bf21;
+
+	-moz-border-radius: ;
+}
+
+table.toptable {
+
+	width:100%;
+
+}
+table.toptable th {
+
+}
+table.toptable td {
+vertical-align: top;
+
+}
+
+.background{
+background-color:#9ecb96;
+}
+h1{
+text-align:center;
+}
+
+.red{
+color:red;
+}
+.blue{
+color:blue;
+}
+

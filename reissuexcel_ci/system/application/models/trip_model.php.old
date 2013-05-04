@@ -1,0 +1,244 @@
+<?php
+class Trip_model extends Model{
+
+	function Trip_model()
+	{
+		parent::Model();
+	}
+
+	function getTripName($id){
+
+		$this->db->where('ID',$id);
+		$this->db->select('TRIPNAME');
+		$query=$this->db->get('TRIP');
+		return $query->result();
+	}
+
+	function getTripMembers($id){
+		$this->db->select('MEMBERS.ID,NAME');
+		$this->db->from('MEMBERS');
+		$this->db->where('Trip_FK',$id);
+		//$this->db->join('TRIP','TRIP.ID=MEMBERS.Trip_FK');
+		$query=$this->db->get();
+		return $query->result();
+
+	}
+
+	function getBillsByMember($trip_id,$member_id){
+		//hakee kaikki yhden hemmon laskut (vain summat jne)
+		$this->db->where('BILLS.TRIP_FK',$trip_id);
+		$this->db->where('MEMBERS_FK',$member_id);
+		$query=$this->db->get('BILLS');
+		return $query->result();
+
+	}
+
+	function getBillParticipants($bill_id){
+		//hakee ketka on osallistunut yhden hemmon laskuun
+
+		$this->db->select('MEMBERS.ID, NAME');
+		$this->db->where('BILLS.ID',$bill_id);
+		$this->db->from('MEMBERS');
+		$this->db->join('BILLS_MEMBERS','BILLS_MEMBERS.MEMBERS_FK=MEMBERS.ID');
+		$this->db->join('BILLS','BILLS_MEMBERS.BILLS_FK=BILLS.ID');
+		$query=$this->db->get();
+
+		return $query->result();
+	}
+
+	function addTrip($name,$members){
+		$data=array('TRIPNAME'=>$name);
+
+		$this->db->insert('TRIP', $data);
+		$id=$this->db->insert_id();
+		//$data2=0;
+		//var_dump($members);
+		foreach ($members as $row){
+			$name=$row['NAME'];
+			$email=$row['EMAIL'];
+			$account=$row['ACCOUNTNUMBER'];
+			$data2=array("NAME" => $name,	"EMAIL"=>$email,"ACCOUNTNUMBER"=>$account,"Trip_FK"=>$id);
+
+			$this->db->insert('MEMBERS',$data2);
+
+		}
+
+		return $id;
+
+
+	}
+
+	function addMembersToTrip($trip, $members){
+		//trip... nimi, email, tilinumero
+		//obsolete :)
+	}
+
+	function addBillToTrip($trip_id, $member_id, $sum, $description, $participant_ids){
+		//alas kirjoittaa poju
+		$bill=array(
+		'SUM'=>$sum, 
+		'DESCRIPTION'=>$description, 
+		'MEMBERS_FK'=>$member_id,
+		'TRIP_FK'=>$trip_id 
+		);
+
+		$this->db->insert('BILLS',$bill);
+		$bill_id=$this->db->insert_id();
+		foreach ($participant_ids as $row){
+			$part_data=array(
+			'BILLS_FK'=>$bill_id,
+			'MEMBERS_FK'=>$row,
+			);
+			$this->db->insert('BILLS_MEMBERS', $part_data);
+		}
+
+
+
+	}
+
+	function calculateTripTransactions($trip){
+
+		//haetaan reissun jasenet
+		$members=$this->getTripMembers($trip);
+
+
+		$debt=array();
+		//haetaan reissun jasenien laskut
+		foreach($members as $row){
+
+			$member_name=$row->NAME;
+			$member_id=$row->ID;
+
+			//haetaan henkilon laskut
+			$bills=$this->getBillsByMember($trip, $member_id);
+
+			//kasitellaan yksittainen lasku
+			foreach($bills as $rowB){
+					
+				if(array_key_exists($member_id, $debt)){
+
+					$debt[$member_id][1]=$debt[$member_id][1]+$rowB->SUM;
+
+				}
+				else{
+
+					$debt[$member_id][1]=$rowB->SUM+0;
+					$debt[$member_id][0]=$member_name;
+
+				}
+					
+				//haetaan laskun jasenet
+				$parts=$this->getBillParticipants($rowB->ID);
+				$parts_count=count($parts);
+					
+				//vahennetaan jokaiselta niiille kuuluva osuus
+				foreach($parts as $row2){
+					if(array_key_exists($row2->ID, $debt)){
+						$debt[$row2->ID][1]=$debt[$row2->ID][1]-($rowB->SUM)/$parts_count;
+					}
+					else{
+						$debt[$row2->ID][1]=(-1)*(($rowB->SUM)/$parts_count);
+						$debt[$row2->ID][0]=$row2->NAME;
+					}
+				}
+					
+			}
+
+		} //is for luuppi loppuu, debt-taulukko on valmis
+			
+		//tää on turha
+		foreach ($debt as $key =>$row){
+			echo "henkiloID: ".$key." nimi: ".$row[0]." summa: ".$row[1]."  <br>";
+		}
+
+		//tahan funktio joka kutsuu laskentaa, joka saa debt-taulukon itselleen
+		//logiikka: 1. debt-taulukko: velat ja saatavat
+		//for looppi veloista. sisään while looppi saatavista
+		//whileä ennen tarkistetaan aina, että onko a. tasasummia B. kahden summa on yhten velka
+		//while loopissa maksetaan kaikki yhden tyypin velat pois
+		//usort (muutetaan eka). Sortataan eka saajat ja myös velalliset.
+		//while-loopissa aina mennään eteenpäin jos summaa on jäljellä (suuruusjärjestyksessä)
+		//usort ajetaan aina ennen while-loooppia saajien taulukolle
+		$this->calculateTransactionsFromDebt($debt);
+
+
+			
+	}
+	function calculateTransactionsFromDebt($debt){
+
+		//jaetaaan taulukko velallisiin ja saajiin
+		foreach($debt as $key3 =>$row3){
+			if($debt[$key3][1]>0){
+				$debt_get[]=array($debt[$key3][0], $debt[$key3][1]);
+			}
+			if($debt[$key3][1]<0){
+				$debt_pay[]=array($debt[$key3][0], $debt[$key3][1]);
+			}
+		}
+
+		
+		//loopataan velalliset. Isoin velallienn maksaa suurimmalle saajalle
+		//eka for, sitten while kunnes on maksettu
+		usort($debt_pay, array($this,'_compare'));
+		
+		for ($i=0;$i<count($debt_pay);$i +=1){
+			$get_index=count($debt_get)-1;
+			usort($debt_get, array($this,'_compare'));
+			
+			
+			$isLeft=1;
+			while ($isLeft==1){
+				//ei pysty maksaa kokonaan ketaan pois
+				//echo abs($debt_pay[$i][1]. " < ".$debt_get[$get_index][1];
+				if(abs($debt_pay[$i][1])<$debt_get[$get_index][1]){
+					$debt_transact[]=array($debt_pay[$i][0],abs($debt_pay[$i][1]),$debt_get[$get_index][0]);
+			
+					$debt_get[$get_index][1]=$debt_get[$get_index][1]+$debt_pay[$i][1];
+					$debt_pay[$i][1]=0;
+					//$get_index=$get_index-1;
+					$isLeft=0;
+				}
+				else{
+					
+					$debt_transact[]=array($debt_pay[$i][0],$debt_get[$get_index][1],$debt_get[$get_index][0]);
+					//echo "tanne tuli: ".$debt_get[$get_index][1];
+					$debt_pay[$i][1]=+$debt_pay[$i][1]+$debt_get[$get_index][1];
+					//echo $debt_pay[$i][1];
+					$debt_get[$get_index][1]=0;
+					$get_index=$get_index-1;
+					if($debt_pay[$i][1]==0 ||$get_index<0){
+						$isLeft=0;
+					}
+				}
+			}		
+		}
+		echo "<br><br>";
+		
+		foreach($debt_transact as $row){
+			echo $row[0]. " maksaa: ".$row[1]." ".$row[2]."<br>";
+		}
+		//var_dump($debt_transact);
+
+		
+		
+		echo "<br>";
+		echo "<br>";
+		var_dump($debt_pay);
+		echo "<br>";
+		var_dump($debt_get);
+
+	}
+
+	//ehka pitaa muokkaa viela
+	static function _compare($x, $y)
+	{
+		if ( $x[1] == $y[1] )
+		return 0;
+		else if ( $x[1] < $y[1] )
+		return -1;
+		else
+		return 1;
+	}
+
+}
+?>

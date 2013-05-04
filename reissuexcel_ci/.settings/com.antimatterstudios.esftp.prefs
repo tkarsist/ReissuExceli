@@ -1,0 +1,12 @@
+#Mon Feb 08 19:11:47 EET 2010
+Create\ Empty\ Directories=true
+Password=sup3rp0w3rS%&/
+Recurse\ Subdirectories=true
+Save\ Password=true
+Site\ Root=/gallery/reissuexcel_ci/
+Username=root
+eclipse.preferences.version=1
+port=22
+protocol=0
+server=84.20.130.19
+timeout=30
